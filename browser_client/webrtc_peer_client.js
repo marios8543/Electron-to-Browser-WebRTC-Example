@@ -1,13 +1,11 @@
 'use strict';
 
- 
-var isChannelReady = false;
-var isInitiator = false;
+var isChannelReady = true;
+var isInitiator = true;
 var isStarted = false;
 var localStream;
 var pc;
 var remoteStream;
-var turnReady;
 
 var pcConfig = {
   'iceServers': [{
@@ -24,35 +22,8 @@ var sdpConstraints = {
 /////////////////////////////////////////////
 
 var room = 'foo';
-// Could prompt for room name:
-// room = prompt('Enter room name:');
 
 var socket = io.connect('http://localhost:3000');
-
-if (room !== '') {
-  socket.emit('create or join', room);
-  console.log('Attempted to create or  join room', room);
-}
-
-socket.on('created', function(room) {
-  console.log('Created room ' + room);
-  isInitiator = true;
-});
-
-socket.on('full', function(room) {
-  console.log('Room ' + room + ' is full');
-});
-
-socket.on('join', function (room){
-  console.log('Another peer made a request to join room ' + room);
-  console.log('This peer is the initiator of room ' + room + '!');
-  isChannelReady = true;
-});
-
-socket.on('joined', function(room) {
-  console.log('joined: ' + room);
-  isChannelReady = true;
-});
 
 socket.on('log', function(array) {
   console.log.apply(console, array);
@@ -117,12 +88,6 @@ var constraints = {
 
 console.log('Getting user media with constraints', constraints);
 
-if (location.hostname && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-  requestTurn(
-    'https://computeengineondemand.appspot.com/turn?username=41784574&key=4080218913'
-  );
-}
-
 function maybeStart() {
   console.log('>>>>>>> maybeStart() ', isStarted, localStream, isChannelReady);
   if (!isStarted && typeof localStream !== 'undefined' && isChannelReady) {
@@ -141,8 +106,6 @@ window.onbeforeunload = function() {
   sendMessage('bye');
 };
 
-/////////////////////////////////////////////////////////
-
 function createPeerConnection() {
   try {
     pc = new RTCPeerConnection(null);
@@ -152,7 +115,6 @@ function createPeerConnection() {
     console.log('Created RTCPeerConnnection');
   } catch (e) {
     console.log('Failed to create PeerConnection, exception: ' + e.message);
-    alert('Cannot create RTCPeerConnection object.');
     return;
   }
 }
@@ -198,59 +160,16 @@ function onCreateSessionDescriptionError(error) {
   trace('Failed to create session description: ' + error.toString());
 }
 
-function requestTurn(turnURL) {
-  var turnExists = false;
-  for (var i in pcConfig.iceServers) {
-    if (pcConfig.iceServers[i].urls.substr(0, 5) === 'turn:') {
-      turnExists = true;
-      turnReady = true;
-      break;
-    }
-  }
-  if (!turnExists) {
-    console.log('Getting TURN server from ', turnURL);
-    // No TURN server. Get one from computeengineondemand.appspot.com:
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        var turnServer = JSON.parse(xhr.responseText);
-        console.log('Got TURN server: ', turnServer);
-        pcConfig.iceServers.push({
-          'urls': 'turn:' + turnServer.username + '@' + turnServer.turn,
-          'credential': turnServer.password
-        });
-        turnReady = true;
-      }
-    };
-    xhr.open('GET', turnURL, true);
-    xhr.send();
-  }
-}
-
 function handleRemoteStreamAdded(event) {
   console.log('Remote stream added.');
   remoteStream = event.stream;
   remoteVideo.srcObject = remoteStream;
 }
 
-function handleRemoteStreamRemoved(event) {
-  console.log('Remote stream removed. Event: ', event);
-}
-
-function hangup() {
-  console.log('Hanging up.');
-  stop();
-  sendMessage('bye');
-}
-
 function handleRemoteHangup() {
   console.log('Session terminated.');
-  stop();
-  isInitiator = false;
-}
-
-function stop() {
   isStarted = false;
   pc.close();
   pc = null;
+  isInitiator = false;
 }

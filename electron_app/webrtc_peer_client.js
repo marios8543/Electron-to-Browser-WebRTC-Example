@@ -1,24 +1,16 @@
 'use strict';
 const { desktopCapturer } = require("electron");
  
-var isChannelReady = false;
+var isChannelReady = true;
 var isInitiator = false;
 var isStarted = false;
 var localStream;
 var pc;
-var remoteStream;
-var turnReady;
 
 var pcConfig = {
   'iceServers': [{
     'urls': 'stun:stun.l.google.com:19302'
   }]
-};
-
-// Set up audio and video regardless of what devices are present.
-var sdpConstraints = {
-  offerToReceiveAudio: true,
-  offerToReceiveVideo: true
 };
 
 /////////////////////////////////////////////
@@ -28,31 +20,6 @@ var room = 'foo';
 // room = prompt('Enter room name:');
 
 var socket = io.connect('http://localhost:3000');
-
-if (room !== '') {
-  socket.emit('create or join', room);
-  console.log('Attempted to create or  join room', room);
-}
-
-socket.on('created', function(room) {
-  console.log('Created room ' + room);
-  isInitiator = true;
-});
-
-socket.on('full', function(room) {
-  console.log('Room ' + room + ' is full');
-});
-
-socket.on('join', function (room){
-  console.log('Another peer made a request to join room ' + room);
-  console.log('This peer is the initiator of room ' + room + '!');
-  isChannelReady = true;
-});
-
-socket.on('joined', function(room) {
-  console.log('joined: ' + room);
-  isChannelReady = true;
-});
 
 socket.on('log', function(array) {
   console.log.apply(console, array);
