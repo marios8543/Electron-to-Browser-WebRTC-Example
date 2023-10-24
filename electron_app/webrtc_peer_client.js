@@ -1,5 +1,5 @@
 'use strict';
-
+const { desktopCapturer } = require("electron");
  
 var isChannelReady = false;
 var isInitiator = false;
@@ -92,15 +92,21 @@ socket.on('message', function(message) {
 ////////////////////////////////////////////////////
 
 var localVideo = document.querySelector('#localVideo');
-var remoteVideo = document.querySelector('#remoteVideo');
 
-navigator.mediaDevices.getUserMedia({
-  audio: false,
-  video: true
-})
-.then(gotStream)
-.catch(function(e) {
-  alert('getUserMedia() error: ' + e.name);
+desktopCapturer.getSources({ types: ["screen"] }).then(sources => {
+  navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: {
+      mandatory: {
+        chromeMediaSource: 'desktop',
+        chromeMediaSourceId: sources[0].id,
+        minWidth: 1280,
+        maxWidth: 1920,
+        minHeight: 720,
+        maxHeight: 1080
+      }
+    }
+  }).then(gotStream);
 });
 
 function gotStream(stream) {
@@ -112,12 +118,6 @@ function gotStream(stream) {
     maybeStart();
   }
 }
-
-var constraints = {
-  video: true
-};
-
-console.log('Getting user media with constraints', constraints);
 
 if (location.hostname && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
   requestTurn(
@@ -232,7 +232,6 @@ function requestTurn(turnURL) {
 function handleRemoteStreamAdded(event) {
   console.log('Remote stream added.');
   remoteStream = event.stream;
-  remoteVideo.srcObject = remoteStream;
 }
 
 function handleRemoteStreamRemoved(event) {

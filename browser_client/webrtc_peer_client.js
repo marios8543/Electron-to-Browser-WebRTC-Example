@@ -91,7 +91,6 @@ socket.on('message', function(message) {
 
 ////////////////////////////////////////////////////
 
-var localVideo = document.querySelector('#localVideo');
 var remoteVideo = document.querySelector('#remoteVideo');
 
 navigator.mediaDevices.getUserMedia({
@@ -106,7 +105,6 @@ navigator.mediaDevices.getUserMedia({
 function gotStream(stream) {
   console.log('Adding local stream.');
   localStream = stream;
-  localVideo.srcObject = stream;
   sendMessage('got user media');
   if (isInitiator) {
     maybeStart();
