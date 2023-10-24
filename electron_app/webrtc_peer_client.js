@@ -13,19 +13,11 @@ var pcConfig = {
   }]
 };
 
-/////////////////////////////////////////////
-
-var room = 'foo';
-// Could prompt for room name:
-// room = prompt('Enter room name:');
-
 var socket = io.connect('http://localhost:3000');
 
 socket.on('log', function(array) {
   console.log.apply(console, array);
 });
-
-////////////////////////////////////////////////
 
 function sendMessage(message) {
   console.log('Client sending message: ', message);
@@ -116,8 +108,6 @@ function createPeerConnection() {
   try {
     pc = new RTCPeerConnection(null);
     pc.onicecandidate = handleIceCandidate;
-    pc.onaddstream = handleRemoteStreamAdded;
-    pc.onremovestream = handleRemoteStreamRemoved;
     console.log('Created RTCPeerConnnection');
   } catch (e) {
     console.log('Failed to create PeerConnection, exception: ' + e.message);
@@ -194,21 +184,6 @@ function requestTurn(turnURL) {
     xhr.open('GET', turnURL, true);
     xhr.send();
   }
-}
-
-function handleRemoteStreamAdded(event) {
-  console.log('Remote stream added.');
-  remoteStream = event.stream;
-}
-
-function handleRemoteStreamRemoved(event) {
-  console.log('Remote stream removed. Event: ', event);
-}
-
-function hangup() {
-  console.log('Hanging up.');
-  stop();
-  sendMessage('bye');
 }
 
 function handleRemoteHangup() {

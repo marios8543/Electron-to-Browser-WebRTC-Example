@@ -3,7 +3,6 @@
 var isChannelReady = true;
 var isInitiator = true;
 var isStarted = false;
-var localStream;
 var pc;
 var remoteStream;
 
@@ -75,7 +74,6 @@ navigator.mediaDevices.getUserMedia({
 
 function gotStream(stream) {
   console.log('Adding local stream.');
-  localStream = stream;
   sendMessage('got user media');
   if (isInitiator) {
     maybeStart();
@@ -89,11 +87,10 @@ var constraints = {
 console.log('Getting user media with constraints', constraints);
 
 function maybeStart() {
-  console.log('>>>>>>> maybeStart() ', isStarted, localStream, isChannelReady);
-  if (!isStarted && typeof localStream !== 'undefined' && isChannelReady) {
+  console.log('>>>>>>> maybeStart() ', isStarted, isChannelReady);
+  if (!isStarted && isChannelReady) {
     console.log('>>>>>> creating peer connection');
     createPeerConnection();
-    pc.addStream(localStream);
     isStarted = true;
     console.log('isInitiator', isInitiator);
     if (isInitiator) {
@@ -111,7 +108,6 @@ function createPeerConnection() {
     pc = new RTCPeerConnection(null);
     pc.onicecandidate = handleIceCandidate;
     pc.onaddstream = handleRemoteStreamAdded;
-    pc.onremovestream = handleRemoteStreamRemoved;
     console.log('Created RTCPeerConnnection');
   } catch (e) {
     console.log('Failed to create PeerConnection, exception: ' + e.message);
@@ -139,7 +135,7 @@ function handleCreateOfferError(event) {
 
 function doCall() {
   console.log('Sending offer to peer');
-  pc.createOffer(setLocalAndSendMessage, handleCreateOfferError);
+  pc.createOffer(setLocalAndSendMessage, handleCreateOfferError, {offerToReceiveVideo: true});
 }
 
 function doAnswer() {
