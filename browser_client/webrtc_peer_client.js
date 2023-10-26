@@ -1,33 +1,6 @@
 'use strict';
 
-const pcConfig = {
-  'iceServers': [{
-    'urls': 'stun:stun.l.google.com:19302'
-  }]
-};
-
-const sdpConstraints = {
-  offerToReceiveAudio: true,
-  offerToReceiveVideo: true
-};
-
-var localStream
-
-navigator.mediaDevices.getUserMedia({
-  audio: false,
-  video: true
-})
-.then(gotStream)
-.catch(function(e) {
-  alert('getUserMedia() error: ' + e.name);
-});
-
-function gotStream(stream) {
-  console.log('Adding local stream.');
-  localStream = stream
-}
-
-function getStreamTrack() {
+window.getRTCStream = () => {
   return new Promise((resolve, reject) => {
     var isInitiator = true;
     var isStarted = false;
@@ -92,7 +65,8 @@ function getStreamTrack() {
         pc.onaddstream = handleRemoteStreamAdded;
         console.log('Created RTCPeerConnnection');
       } catch (e) {
-        console.log('Failed to create PeerConnection, exception: ' + e.message);
+        console.error('Failed to create PeerConnection, exception: ' + e.message);
+        reject('Failed to create PeerConnection, exception: ' + e.message)
         return;
       }
     }
@@ -154,3 +128,10 @@ function getStreamTrack() {
     maybeStart();
   })
 }
+
+window.getTrackLabel = async () => {
+  const stream = await window.getRTCStream();
+  return stream.getTracks().find(t => t.kind == 'video').label;
+}
+
+//Vencord.Webpack.findStore("MediaEngineStore").getMediaEngine().getDesktopSource = async (a, b) => await getTrackLabel()

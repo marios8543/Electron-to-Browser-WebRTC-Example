@@ -4,7 +4,9 @@
   "description": "A minimal Electron application",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "repository": "https://github.com/electron/electron-quick-start",
   "keywords": [
@@ -17,10 +19,17 @@
   "author": "GitHub",
   "license": "CC0-1.0",
   "devDependencies": {
-    "electron": "^6.0.12"
+    "electron": "^27.0.2",
+    "electron-builder": "^24.6.4"
   },
   "dependencies": {
     "node-static": "^0.7.11",
     "socket.io": "^2.3.0"
+  },
+  "build": {
+    "appId": "com.marios8543.webrtc-screenshare"
+  },
+  "linux": {
+    "target": "AppImage"
   }
 }

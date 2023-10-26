@@ -1,5 +1,5 @@
 'use strict';
-const { desktopCapturer } = require("electron");
+const { ipcRenderer } = require("electron");
  
 var isChannelReady = true;
 var isInitiator = false;
@@ -7,11 +7,35 @@ var isStarted = false;
 var localStream;
 var pc;
 
-var pcConfig = {
-  'iceServers': [{
-    'urls': 'stun:stun.l.google.com:19302'
-  }]
-};
+var localVideo = document.querySelector('#localVideo');
+
+ipcRenderer.on("SET_SOURCE", (event, sourceId) => {
+  console.log("doing the needful", sourceId);
+  window.SOURCE_ID = sourceId
+  navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: {
+      mandatory: {
+        chromeMediaSource: 'desktop',
+        chromeMediaSourceId: sourceId,
+        minWidth: 1280,
+        maxWidth: 1920,
+        minHeight: 720,
+        maxHeight: 1080
+      }
+    }
+  }).then(gotStream);
+})
+
+function gotStream(stream) {
+  console.log('Adding local stream.');
+  localStream = stream;
+  localVideo.srcObject = stream;
+  sendMessage('got user media');
+  if (isInitiator) {
+    maybeStart();
+  }
+}
 
 var socket = io.connect('http://localhost:3000');
 
@@ -47,36 +71,6 @@ socket.on('message', function(message) {
     handleRemoteHangup();
   }
 });
-
-////////////////////////////////////////////////////
-
-var localVideo = document.querySelector('#localVideo');
-
-desktopCapturer.getSources({ types: ["screen"] }).then(sources => {
-  navigator.mediaDevices.getUserMedia({
-    audio: false,
-    video: {
-      mandatory: {
-        chromeMediaSource: 'desktop',
-        chromeMediaSourceId: sources[0].id,
-        minWidth: 1280,
-        maxWidth: 1920,
-        minHeight: 720,
-        maxHeight: 1080
-      }
-    }
-  }).then(gotStream);
-});
-
-function gotStream(stream) {
-  console.log('Adding local stream.');
-  localStream = stream;
-  localVideo.srcObject = stream;
-  sendMessage('got user media');
-  if (isInitiator) {
-    maybeStart();
-  }
-}
 
 function maybeStart() {
   console.log('>>>>>>> maybeStart() ', isStarted, localStream, isChannelReady);
